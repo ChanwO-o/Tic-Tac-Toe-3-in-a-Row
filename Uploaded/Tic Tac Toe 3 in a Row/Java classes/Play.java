@@ -34,7 +34,15 @@ public class Play extends Activity {
 	private static final String PREF_GAMEMODE = "name";
 	private static final String PREF_BOARD = "board"; //was planning to save the board, but nah
 	
-	float WIDTH, HEIGHT, SQUARE, LINEWIDTH, TITLEBARHEIGHT; // height leaks a bit cuz of title bar height, must subtract that much on each rect
+	/* float variables: values different for each device!!!
+	 * WIDTH, HEIGHT: screen dimensions
+	 * SQUARE, LINEWIDTH: board dimensions
+	 * TITLEBAR_HEIGHT: used to re-calculate button dimensions, prevents buttons from leaking out of the screen
+	 * BOARD_AREA_HEIGHT: distance between gameModeTextRect and clear/changemode buttons, used to center board on screen
+	 * GAP_TOP_TO_BOARD: distance between gameModeTextRect and board lines
+	 * 
+	 */
+	float WIDTH, HEIGHT, SQUARE, LINEWIDTH, TITLEBAR_HEIGHT, BOARD_AREA_HEIGHT, GAP_TOP_TO_BOARD;
 	int[] board;
 	int emptyCells;
 	int turn;
@@ -96,13 +104,13 @@ public class Play extends Activity {
 		SQUARE = WIDTH / 5;
 		LINEWIDTH = SQUARE / 10;
 		//get height of the title bar (title bar height must be considered in calculating exact dimensions of rects)
-		TITLEBARHEIGHT = 0;
+		TITLEBAR_HEIGHT = 0;
 	    int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
 	    if (resourceId > 0) {
-	        TITLEBARHEIGHT = getResources().getDimensionPixelSize(resourceId);
-	        Toast.makeText(this, "" + TITLEBARHEIGHT, Toast.LENGTH_SHORT).show();
+	        TITLEBAR_HEIGHT = getResources().getDimensionPixelSize(resourceId);
+	        Toast.makeText(this, "title bar: " + TITLEBAR_HEIGHT, Toast.LENGTH_SHORT).show();
 	    }
-		
+	    
 		mSharedPreferences = getSharedPreferences(PREFS, MODE_PRIVATE);
 		GAMEMODE = mSharedPreferences.getString(PREF_GAMEMODE, "AI");
 		ai = new AI();
@@ -128,23 +136,28 @@ public class Play extends Activity {
 	}
 
 	public void resetBoard() {
-		r1 = new MyRect(SQUARE, SQUARE, 2*SQUARE - LINEWIDTH / 2, 2*SQUARE - LINEWIDTH / 2);
-		r2 = new MyRect(2*SQUARE + LINEWIDTH / 2, SQUARE, 3*SQUARE - LINEWIDTH / 2, 2*SQUARE - LINEWIDTH / 2);
-		r3 = new MyRect(3*SQUARE + LINEWIDTH / 2, SQUARE, 4*SQUARE, 2*SQUARE - LINEWIDTH / 2);
-		r4 = new MyRect(SQUARE, 2*SQUARE + LINEWIDTH / 2, 2*SQUARE - LINEWIDTH / 2, 3*SQUARE - LINEWIDTH / 2);
-		r5 = new MyRect(2*SQUARE + LINEWIDTH / 2, 2*SQUARE + LINEWIDTH / 2, 3*SQUARE - LINEWIDTH / 2, 3*SQUARE - LINEWIDTH / 2);
-		r6 = new MyRect(3*SQUARE + LINEWIDTH / 2, 2*SQUARE + LINEWIDTH / 2, 4*SQUARE, 3*SQUARE - LINEWIDTH / 2);
-		r7 = new MyRect(SQUARE, 3*SQUARE + LINEWIDTH / 2, 2*SQUARE - LINEWIDTH / 2, 4*SQUARE);
-		r8 = new MyRect(2*SQUARE + LINEWIDTH / 2, 3*SQUARE + LINEWIDTH / 2, 3*SQUARE - LINEWIDTH / 2, 4*SQUARE);
-		r9 = new MyRect(3*SQUARE + LINEWIDTH / 2, 3*SQUARE + LINEWIDTH / 2, 4*SQUARE, 4*SQUARE);
 		gameModeTextRect = new MyRect(LINEWIDTH, LINEWIDTH, WIDTH - LINEWIDTH, SQUARE - LINEWIDTH);
 		gameModeTextRect.color = Color.GRAY;
-//		clearButton = new MyRect(SQUARE/2, 4*SQUARE + 2*LINEWIDTH, WIDTH / 2 - LINEWIDTH, 5*SQUARE + 2*LINEWIDTH);
-		clearButton = new MyRect(SQUARE/2, HEIGHT - SQUARE - 2*LINEWIDTH - TITLEBARHEIGHT, WIDTH / 2 - LINEWIDTH, HEIGHT - 2*LINEWIDTH - TITLEBARHEIGHT);
+		clearButton = new MyRect(SQUARE/2, HEIGHT - SQUARE - 2*LINEWIDTH - TITLEBAR_HEIGHT, WIDTH / 2 - LINEWIDTH, HEIGHT - 2*LINEWIDTH - TITLEBAR_HEIGHT);
 		clearButton.color = Color.DKGRAY;
-//		changeModeButton = new MyRect(WIDTH / 2 + LINEWIDTH, 4*SQUARE + 2*LINEWIDTH, WIDTH - SQUARE/2, 5*SQUARE + 2*LINEWIDTH);
-		changeModeButton = new MyRect(WIDTH / 2 + LINEWIDTH, HEIGHT - SQUARE - 2*LINEWIDTH - TITLEBARHEIGHT, WIDTH - SQUARE/2, HEIGHT - 2*LINEWIDTH - TITLEBARHEIGHT);
+		changeModeButton = new MyRect(WIDTH / 2 + LINEWIDTH, HEIGHT - SQUARE - 2*LINEWIDTH - TITLEBAR_HEIGHT, WIDTH - SQUARE/2, HEIGHT - 2*LINEWIDTH - TITLEBAR_HEIGHT);
 		changeModeButton.color = Color.DKGRAY;
+		
+		BOARD_AREA_HEIGHT = clearButton.top - gameModeTextRect.bottom;
+	    Toast.makeText(this, "Board area: " + BOARD_AREA_HEIGHT, Toast.LENGTH_SHORT).show();
+		GAP_TOP_TO_BOARD = (BOARD_AREA_HEIGHT - 3*SQUARE) / 2;
+		Toast.makeText(this, "Board to top area: " + GAP_TOP_TO_BOARD, Toast.LENGTH_SHORT).show();
+		
+		r1 = new MyRect(SQUARE, gameModeTextRect.bottom + GAP_TOP_TO_BOARD, 2*SQUARE - LINEWIDTH/2, gameModeTextRect.bottom + SQUARE - LINEWIDTH/2 + GAP_TOP_TO_BOARD);
+		r2 = new MyRect(2*SQUARE + LINEWIDTH/2, gameModeTextRect.bottom + GAP_TOP_TO_BOARD, 3*SQUARE - LINEWIDTH/2, gameModeTextRect.bottom + SQUARE - LINEWIDTH/2 + GAP_TOP_TO_BOARD);
+		r3 = new MyRect(3*SQUARE + LINEWIDTH/2, gameModeTextRect.bottom + GAP_TOP_TO_BOARD, 4*SQUARE, gameModeTextRect.bottom + SQUARE - LINEWIDTH/2 + GAP_TOP_TO_BOARD);
+		r4 = new MyRect(SQUARE, gameModeTextRect.bottom + SQUARE + LINEWIDTH/2 + GAP_TOP_TO_BOARD, 2*SQUARE - LINEWIDTH/2, gameModeTextRect.bottom + 2*SQUARE - LINEWIDTH/2 + GAP_TOP_TO_BOARD);
+		r5 = new MyRect(2*SQUARE + LINEWIDTH/2, gameModeTextRect.bottom + SQUARE + LINEWIDTH/2 + GAP_TOP_TO_BOARD, 3*SQUARE - LINEWIDTH/2, gameModeTextRect.bottom + 2*SQUARE - LINEWIDTH/2 + GAP_TOP_TO_BOARD);
+		r6 = new MyRect(3*SQUARE + LINEWIDTH/2, gameModeTextRect.bottom + SQUARE + LINEWIDTH/2 + GAP_TOP_TO_BOARD, 4*SQUARE, gameModeTextRect.bottom + 2*SQUARE - LINEWIDTH/2 + GAP_TOP_TO_BOARD);
+		r7 = new MyRect(SQUARE, gameModeTextRect.bottom + 2*SQUARE + LINEWIDTH/2 + GAP_TOP_TO_BOARD, 2*SQUARE - LINEWIDTH/2, gameModeTextRect.bottom + 3*SQUARE + GAP_TOP_TO_BOARD);
+		r8 = new MyRect(2*SQUARE + LINEWIDTH/2, gameModeTextRect.bottom + 2*SQUARE + LINEWIDTH/2 + GAP_TOP_TO_BOARD, 3*SQUARE - LINEWIDTH/2, gameModeTextRect.bottom + 3*SQUARE + GAP_TOP_TO_BOARD);
+		r9 = new MyRect(3*SQUARE + LINEWIDTH/2, gameModeTextRect.bottom + 2*SQUARE + LINEWIDTH/2 + GAP_TOP_TO_BOARD, 4*SQUARE, gameModeTextRect.bottom + 3*SQUARE + GAP_TOP_TO_BOARD);
+		
 		rectangles = new MyRect[]{r1, r2, r3, r4, r5, r6, r7, r8, r9};
 		board = new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0};
 		turn = rnd.nextInt(2) + 1; //1 or 2
@@ -334,20 +347,18 @@ public class Play extends Activity {
 			linePnt.setStrokeJoin(Paint.Join.ROUND);
 			linePnt.setStrokeCap(Paint.Cap.ROUND);
 			
-			canvas.drawLine(2*SQUARE, SQUARE, 2*SQUARE, 4*SQUARE, linePnt);
-			canvas.drawLine(3*SQUARE, SQUARE, 3*SQUARE, 4*SQUARE, linePnt);
-			canvas.drawLine(SQUARE, 2*SQUARE, 4*SQUARE, 2*SQUARE, linePnt);
-			canvas.drawLine(SQUARE, 3*SQUARE, 4*SQUARE, 3*SQUARE, linePnt);
+			canvas.drawLine(2*SQUARE, gameModeTextRect.bottom + GAP_TOP_TO_BOARD, 2*SQUARE, gameModeTextRect.bottom + GAP_TOP_TO_BOARD + 3*SQUARE, linePnt);
+			canvas.drawLine(3*SQUARE, gameModeTextRect.bottom + GAP_TOP_TO_BOARD, 3*SQUARE, gameModeTextRect.bottom + GAP_TOP_TO_BOARD + 3*SQUARE, linePnt);
+			canvas.drawLine(SQUARE, gameModeTextRect.bottom + GAP_TOP_TO_BOARD + SQUARE, 4*SQUARE, gameModeTextRect.bottom + GAP_TOP_TO_BOARD + SQUARE, linePnt);
+			canvas.drawLine(SQUARE, gameModeTextRect.bottom + GAP_TOP_TO_BOARD + 2*SQUARE, 4*SQUARE, gameModeTextRect.bottom + GAP_TOP_TO_BOARD + 2*SQUARE, linePnt);
 			
 			for (MyRect r : rectangles) {
 				rectPnt.setColor(r.color);
 				canvas.drawRect(r, rectPnt);
 				
 				if(r.status.equals("O")) {
-//					canvas.drawBitmap(o, r.left, r.top, linePnt);
 					canvas.drawBitmap(o, r.centerX() - o.getWidth() / 2, r.centerY() - o.getHeight() / 2, linePnt);
 				} else if(r.status.equals("X")) {
-//					canvas.drawBitmap(x, r.left, r.top, linePnt);
 					canvas.drawBitmap(x, r.centerX() - o.getWidth() / 2, r.centerY() - o.getHeight() / 2, linePnt);
 				}
 			}
