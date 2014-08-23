@@ -24,6 +24,7 @@ import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnTouchListener;
+import android.widget.Toast;
 
 public class Play extends Activity {
 
@@ -33,9 +34,7 @@ public class Play extends Activity {
 	private static final String PREF_GAMEMODE = "name";
 	private static final String PREF_BOARD = "board"; //was planning to save the board, but nah
 	
-	int WIDTH, HEIGHT; // screen size
-	int SQUARE; // width of one spacing square
-	int LINEWIDTH;
+	float WIDTH, HEIGHT, SQUARE, LINEWIDTH, TITLEBARHEIGHT; // height leaks a bit cuz of title bar height, must subtract that much on each rect
 	int[] board;
 	int emptyCells;
 	int turn;
@@ -81,18 +80,7 @@ public class Play extends Activity {
 	Paint rectPnt = new Paint();
 	Paint textPnt = new Paint();
 	MyRect[] rectangles;
-	MyRect r1;
-	MyRect r2;
-	MyRect r3;
-	MyRect r4;
-	MyRect r5;
-	MyRect r6;
-	MyRect r7;
-	MyRect r8;
-	MyRect r9;
-	MyRect gameModeTextRect;
-	MyRect clearButton;
-	MyRect changeModeButton;
+	MyRect r1, r2, r3, r4, r5, r6, r7, r8, r9, gameModeTextRect, clearButton, changeModeButton;
 	
 	@TargetApi(Build.VERSION_CODES.HONEYCOMB) @SuppressWarnings("deprecation")
 	@Override
@@ -107,6 +95,13 @@ public class Play extends Activity {
 		HEIGHT = display.getHeight();
 		SQUARE = WIDTH / 5;
 		LINEWIDTH = SQUARE / 10;
+		//get height of the title bar (title bar height must be considered in calculating exact dimensions of rects)
+		TITLEBARHEIGHT = 0;
+	    int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+	    if (resourceId > 0) {
+	        TITLEBARHEIGHT = getResources().getDimensionPixelSize(resourceId);
+	        Toast.makeText(this, "" + TITLEBARHEIGHT, Toast.LENGTH_SHORT).show();
+	    }
 		
 		mSharedPreferences = getSharedPreferences(PREFS, MODE_PRIVATE);
 		GAMEMODE = mSharedPreferences.getString(PREF_GAMEMODE, "AI");
@@ -144,9 +139,11 @@ public class Play extends Activity {
 		r9 = new MyRect(3*SQUARE + LINEWIDTH / 2, 3*SQUARE + LINEWIDTH / 2, 4*SQUARE, 4*SQUARE);
 		gameModeTextRect = new MyRect(LINEWIDTH, LINEWIDTH, WIDTH - LINEWIDTH, SQUARE - LINEWIDTH);
 		gameModeTextRect.color = Color.GRAY;
-		clearButton = new MyRect(SQUARE/2, 4*SQUARE + 2*LINEWIDTH, WIDTH / 2 - LINEWIDTH, 5*SQUARE + 2*LINEWIDTH);
+//		clearButton = new MyRect(SQUARE/2, 4*SQUARE + 2*LINEWIDTH, WIDTH / 2 - LINEWIDTH, 5*SQUARE + 2*LINEWIDTH);
+		clearButton = new MyRect(SQUARE/2, HEIGHT - SQUARE - 2*LINEWIDTH - TITLEBARHEIGHT, WIDTH / 2 - LINEWIDTH, HEIGHT - 2*LINEWIDTH - TITLEBARHEIGHT);
 		clearButton.color = Color.DKGRAY;
-		changeModeButton = new MyRect(WIDTH / 2 + LINEWIDTH, 4*SQUARE + 2*LINEWIDTH, WIDTH - SQUARE/2, 5*SQUARE + 2*LINEWIDTH);
+//		changeModeButton = new MyRect(WIDTH / 2 + LINEWIDTH, 4*SQUARE + 2*LINEWIDTH, WIDTH - SQUARE/2, 5*SQUARE + 2*LINEWIDTH);
+		changeModeButton = new MyRect(WIDTH / 2 + LINEWIDTH, HEIGHT - SQUARE - 2*LINEWIDTH - TITLEBARHEIGHT, WIDTH - SQUARE/2, HEIGHT - 2*LINEWIDTH - TITLEBARHEIGHT);
 		changeModeButton.color = Color.DKGRAY;
 		rectangles = new MyRect[]{r1, r2, r3, r4, r5, r6, r7, r8, r9};
 		board = new int[] {0, 0, 0, 0, 0, 0, 0, 0, 0};
